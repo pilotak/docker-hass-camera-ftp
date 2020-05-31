@@ -29,26 +29,27 @@ jobs:
       - name: Prepare
         run: |
           echo "::set-env name=HEAD_TAG::$(git tag --points-at HEAD)"
-          echo "::set-env name=DOCKER_IMAGE::$(${GITHUB_REPOSITORY//docker-})"
+          echo "::set-env name=DOCKER_IMAGE::${GITHUB_REPOSITORY//docker-}"
+
+      - name: Build on push
+        if: success() && env.HEAD_TAG == ''
+        run: |
+          docker build .
 
       - name: Set up Docker Buildx
+        if: env.HEAD_TAG != ''
         uses: crazy-max/ghaction-docker-buildx@v2
         with:
           buildx-version: latest
           skip-cache: false
           qemu-version: latest
 
-      - name: Build
-        if: success() && env.HEAD_TAG == ''
-        run: |
-          docker build .
-
       - name: Docker Login
         if: success() && env.HEAD_TAG != ''
         run: |
           echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
 
-      - name: Buildx & Push
+      - name: Build on release & Push
         if: success() && env.HEAD_TAG != ''
         run: |
           docker buildx build \
