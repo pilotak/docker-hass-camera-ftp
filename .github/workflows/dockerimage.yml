@@ -14,7 +14,7 @@ jobs:
       DOCKER_IMAGE: pilotak/hass-camera-ftp
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      DOCKER_TARGET_PLATFORM: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x
+      DOCKER_TARGET_PLATFORM: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
 
     steps:    
       - name: Checkout
@@ -33,18 +33,24 @@ jobs:
         run: |
           echo ::set-output name=docker_platform::${DOCKER_TARGET_PLATFORM}
           echo ::set-output name=docker_image::${DOCKER_REGISTRY}/${DOCKER_IMAGE}
-          echo ::set-output name=version::${GITHUB_RUN_NUMBER}
-        
-      - name: Docker Login
-        if: success()
-        run: |        
-          echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
-      
-      - name: Run
-        if: success()
+          
+      - name: Buildx
+        if: success() && env.CREATE_RELEASE == 'false'
         run: |
           docker buildx build \
             --platform ${{ steps.prepare.outputs.docker_platform }} \
-            --tag ${DOCKER_IMAGE}:${{ steps.prepare.outputs.version }} \
+            --file ./Dockerfile .
+        
+      - name: Docker Login
+        if: success() && env.CREATE_RELEASE == 'true'
+        run: |        
+          echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
+      
+      - name: Buildx & Push
+        if: success() && env.CREATE_RELEASE == 'true'
+        run: |
+          docker buildx build \
+            --platform ${{ steps.prepare.outputs.docker_platform }} \
+            --tag ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }} \
             --file ./Dockerfile \
-            --output type=image,push=true .
+            --push .
