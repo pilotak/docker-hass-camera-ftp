@@ -1,3 +1,5 @@
+# Docker HomeAssitant camera image uploader
+![Docker Build](https://github.com/pilotak/docker-hass-camera-ftp/workflows/Docker%20Build/Publish%20Image/badge.svg)
 
 ```yaml
 version: "3.6"
