@@ -27,8 +27,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Prepare
-        run: echo "::set-env name=HEAD_TAG::$(git tag --points-at HEAD)"
-        run: echo "::set-env name=DOCKER_IMAGE::$(${GITHUB_REPOSITORY//docker-})"
+        run: |
+          echo "::set-env name=HEAD_TAG::$(git tag --points-at HEAD)"
+          echo "::set-env name=DOCKER_IMAGE::$(${GITHUB_REPOSITORY//docker-})"
 
       - name: Set up Docker Buildx
         uses: crazy-max/ghaction-docker-buildx@v2
