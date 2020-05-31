@@ -1,4 +1,4 @@
-# Docker HomeAssitant camera image uploader
+# Docker HomeAssistant camera image uploader over FTP
 ![Docker Build](https://github.com/pilotak/docker-hass-camera-ftp/workflows/Docker%20Build/badge.svg)
 
 ```yaml
@@ -7,10 +7,10 @@ services:
   uploader:
     container_name: uploader
     restart: always
-    build: ./uploader
+    image: pilotak/hass-camera-ftp
     environment:
-      - CAMERA_COMPONENT=camera.mirobot_map
-      - HEADING_SENSOR=sensor.battery_level
+      - CAMERA_COMPONENT=camera.my_camera_name
+      - HEADING_SENSOR=sensor.heading
       - HASS_URL=http://192.168.88.5:8123
       - TOKEN=abcdefghijklmnopqrstuvwxyz
       - SEND_INTERVAL=60
