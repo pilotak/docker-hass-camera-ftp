@@ -30,12 +30,10 @@ jobs:
           skip-cache: false
           qemu-version: latest
           
-      - name: Buildx
+      - name: Build
         if: success() && env.HEAD_TAG == ''
         run: |
-          docker buildx build \
-            --platform ${DOCKER_TARGET_PLATFORM} \
-            --file ./Dockerfile .
+          docker build .
         
       - name: Docker Login
         if: success() && env.HEAD_TAG != ''
