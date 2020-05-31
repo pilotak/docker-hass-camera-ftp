@@ -11,14 +11,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      DOCKER_IMAGE: pilotak/hass-camera-ftp
+      DOCKER_IMAGE: ${GITHUB_REPOSITORY//docker-}
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       DOCKER_TARGET_PLATFORM: linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
 
-    steps:    
+    steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Git tags
+        run: echo "::set-env name=HEAD_TAG::$(git tag --points-at HEAD)"
 
       - name: Set up Docker Buildx
         uses: crazy-max/ghaction-docker-buildx@v2
@@ -26,31 +29,24 @@ jobs:
           buildx-version: latest
           skip-cache: false
           qemu-version: latest
-
-      - name: Prepare
-        if: success()
-        id: prepare
-        run: |
-          echo ::set-output name=docker_platform::${DOCKER_TARGET_PLATFORM}
-          echo ::set-output name=docker_image::${DOCKER_REGISTRY}/${DOCKER_IMAGE}
           
       - name: Buildx
-        if: success() && env.CREATE_RELEASE == 'false'
+        if: success() && env.HEAD_TAG == ''
         run: |
           docker buildx build \
-            --platform ${{ steps.prepare.outputs.docker_platform }} \
+            --platform ${DOCKER_TARGET_PLATFORM} \
             --file ./Dockerfile .
         
       - name: Docker Login
-        if: success() && env.CREATE_RELEASE == 'true'
+        if: success() && env.HEAD_TAG != ''
         run: |        
           echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
       
       - name: Buildx & Push
-        if: success() && env.CREATE_RELEASE == 'true'
+        if: success() && env.HEAD_TAG != ''
         run: |
           docker buildx build \
-            --platform ${{ steps.prepare.outputs.docker_platform }} \
-            --tag ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }} \
+            --platform ${DOCKER_TARGET_PLATFORM} \
+            --tag ${DOCKER_IMAGE}:${HEAD_TAG} \
             --file ./Dockerfile \
             --push .
